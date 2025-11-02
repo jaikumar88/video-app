@@ -208,17 +208,17 @@ const FullMeetingRoom: React.FC<FullMeetingRoomProps> = ({
         const remoteParticipants = Array.isArray(participants)
           ? participants.filter((p: any) => p.user_id !== user?.id)
           : [];
-        setParticipants(
-          remoteParticipants.map((p: any) => ({
-            id: p.user_id,
-            name: p.display_name || p.user_name || p.user_email || "Unknown",
-            email: p.user_email || "",
-            isHost: p.role === "host",
-            videoEnabled: p.video_enabled,
-            audioEnabled: p.audio_enabled,
-            screenSharing: p.screen_sharing || false,
-          }))
-        );
+        const mappedParticipants = remoteParticipants.map((p: any) => ({
+          id: p.user_id,
+          name: p.display_name || p.user_name || p.user_email || "Unknown",
+          email: p.user_email || "",
+          isHost: p.role === "host",
+          videoEnabled: p.video_enabled,
+          audioEnabled: p.audio_enabled,
+          screenSharing: p.screen_sharing || false,
+        }));
+        console.log(`[FullMeetingRoom] Setting ${mappedParticipants.length} participants:`, mappedParticipants);
+        setParticipants(mappedParticipants);
 
         // Create peer connections for existing participants
         // Note: We don't send offers here - the existing participants will send offers to us
@@ -300,7 +300,7 @@ const FullMeetingRoom: React.FC<FullMeetingRoomProps> = ({
 
   const handleParticipantJoined = useCallback(
     async (participantId: string) => {
-      console.log("Participant joined:", participantId);
+      console.log("[FullMeetingRoom] handleParticipantJoined called with:", participantId);
 
       if (!meetingId) {
         console.error("Cannot fetch participants: meetingId is undefined");
@@ -309,34 +309,42 @@ const FullMeetingRoom: React.FC<FullMeetingRoomProps> = ({
 
       // Fetch updated participant list to get the new participant's info
       try {
+        console.log(`[FullMeetingRoom] Fetching participants for meeting: ${meetingId}`);
         const participants = await meetingApi.getMeetingParticipants(meetingId);
+        console.log(`[FullMeetingRoom] Fetched participants:`, participants);
+        
         const newParticipant = Array.isArray(participants)
           ? participants.find((p: any) => p.user_id === participantId)
           : null;
 
+        console.log(`[FullMeetingRoom] New participant found:`, newParticipant);
+
         if (newParticipant && newParticipant.user_id !== user?.id) {
           // Add participant to list
           setParticipants((prev) => {
+            console.log(`[FullMeetingRoom] Current participants before update:`, prev);
             // Check if participant already exists
             if (prev.some((p) => p.id === participantId)) {
+              console.log(`[FullMeetingRoom] Participant ${participantId} already exists`);
               return prev;
             }
-            return [
-              ...prev,
-              {
-                id: newParticipant.user_id,
-                name:
-                  newParticipant.display_name ||
-                  newParticipant.user_name ||
-                  newParticipant.user_email ||
-                  "Unknown",
-                email: newParticipant.user_email || "",
-                isHost: newParticipant.role === "host",
-                videoEnabled: newParticipant.video_enabled,
-                audioEnabled: newParticipant.audio_enabled,
-                screenSharing: newParticipant.screen_sharing || false,
-              },
-            ];
+            const newParticipantData = {
+              id: newParticipant.user_id,
+              name:
+                newParticipant.display_name ||
+                newParticipant.user_name ||
+                newParticipant.user_email ||
+                "Unknown",
+              email: newParticipant.user_email || "",
+              isHost: newParticipant.role === "host",
+              videoEnabled: newParticipant.video_enabled,
+              audioEnabled: newParticipant.audio_enabled,
+              screenSharing: newParticipant.screen_sharing || false,
+            };
+            console.log(`[FullMeetingRoom] Adding new participant:`, newParticipantData);
+            const updatedParticipants = [...prev, newParticipantData];
+            console.log(`[FullMeetingRoom] Updated participants list:`, updatedParticipants);
+            return updatedParticipants;
           });
 
           // Initiate WebRTC connection with the new participant
@@ -352,18 +360,25 @@ const FullMeetingRoom: React.FC<FullMeetingRoomProps> = ({
             );
             await webrtcServiceRef.current.createOffer(participantId);
           }
+        } else {
+          console.log(`[FullMeetingRoom] Skipping participant: ${participantId} (is current user or not found)`);
         }
       } catch (error) {
-        console.error("Failed to fetch participant info:", error);
+        console.error("[FullMeetingRoom] Failed to fetch participant info:", error);
       }
     },
     [meetingId, user]
   );
 
   const handleParticipantLeft = useCallback((participantId: string) => {
-    console.log("Participant left:", participantId);
+    console.log("[FullMeetingRoom] Participant left:", participantId);
     // Remove participant and close connection
-    setParticipants((prev) => prev.filter((p) => p.id !== participantId));
+    setParticipants((prev) => {
+      console.log(`[FullMeetingRoom] Removing participant ${participantId} from:`, prev);
+      const updated = prev.filter((p) => p.id !== participantId);
+      console.log(`[FullMeetingRoom] Participants after removal:`, updated);
+      return updated;
+    });
     if (webrtcServiceRef.current) {
       webrtcServiceRef.current.removePeerConnection(participantId);
     }
@@ -563,6 +578,8 @@ const FullMeetingRoom: React.FC<FullMeetingRoomProps> = ({
       </Box>
     );
   }
+
+  console.log(`[FullMeetingRoom] Rendering with ${participants.length} participants:`, participants);
 
   return (
     <Box
