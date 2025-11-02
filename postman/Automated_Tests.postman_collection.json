@@ -1,0 +1,599 @@
+{
+  "info": {
+    "name": "WorldClass Video Platform - Automated Tests",
+    "description": "Automated test suite for comprehensive API testing",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Setup Tests",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Server is healthy', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains status', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('status');",
+                  "    pm.expect(responseJson.status).to.equal('healthy');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication Flow Tests",
+      "item": [
+        {
+          "name": "Register New User",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate unique test user",
+                  "const timestamp = Date.now();",
+                  "const randomId = Math.floor(Math.random() * 1000);",
+                  "const testEmail = `test.user.${timestamp}.${randomId}@example.com`;",
+                  "const testPhone = `+1555${String(randomId).padStart(7, '0')}`;",
+                  "",
+                  "pm.environment.set('testEmail', testEmail);",
+                  "pm.environment.set('testPhone', testPhone);",
+                  "pm.environment.set('testPassword', 'TestPassword123!');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User registration successful', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response contains user data', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "    pm.expect(responseJson).to.have.property('user');",
+                  "    pm.expect(responseJson.user).to.have.property('id');",
+                  "    pm.expect(responseJson.user).to.have.property('email');",
+                  "    pm.environment.set('testUserId', responseJson.user.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"full_name\": \"Test User\",\n  \"registration_method\": \"email\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Verify Email (Mock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Email verification successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response confirms verification', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"verification_code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "verify-email"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains tokens', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('access_token');",
+                  "    pm.expect(responseJson).to.have.property('refresh_token');",
+                  "    pm.expect(responseJson).to.have.property('user');",
+                  "    ",
+                  "    // Store tokens for subsequent requests",
+                  "    pm.environment.set('accessToken', responseJson.access_token);",
+                  "    pm.environment.set('refreshToken', responseJson.refresh_token);",
+                  "    pm.environment.set('userId', responseJson.user.id);",
+                  "});",
+                  "",
+                  "pm.test('Token format is valid', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.access_token).to.match(/^[A-Za-z0-9\\-_]+\\.[A-Za-z0-9\\-_]+\\.[A-Za-z0-9\\-_]+$/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get user profile successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Profile data is complete', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('email');",
+                  "    pm.expect(responseJson).to.have.property('full_name');",
+                  "    pm.expect(responseJson).to.have.property('is_verified');",
+                  "    pm.expect(responseJson.email).to.equal(pm.environment.get('testEmail'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Meeting Flow Tests",
+      "item": [
+        {
+          "name": "Create Meeting",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate meeting data",
+                  "const timestamp = Date.now();",
+                  "const futureTime = new Date(timestamp + 3600000).toISOString(); // 1 hour from now",
+                  "pm.environment.set('scheduledTime', futureTime);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Meeting creation successful', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Meeting data is complete', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('title');",
+                  "    pm.expect(responseJson).to.have.property('status');",
+                  "    pm.expect(responseJson).to.have.property('host_id');",
+                  "    pm.expect(responseJson.status).to.equal('waiting');",
+                  "    pm.expect(responseJson.host_id).to.equal(pm.environment.get('userId'));",
+                  "    ",
+                  "    pm.environment.set('meetingId', responseJson.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Automated Test Meeting\",\n  \"description\": \"Meeting created by automated test suite\",\n  \"scheduled_time\": \"{{scheduledTime}}\",\n  \"max_participants\": 10,\n  \"is_public\": false,\n  \"meeting_type\": \"video\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings"]
+            }
+          }
+        },
+        {
+          "name": "Get Meeting Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get meeting details successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Meeting details are correct', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.id).to.equal(pm.environment.get('meetingId'));",
+                  "    pm.expect(responseJson.title).to.equal('Automated Test Meeting');",
+                  "    pm.expect(responseJson.host_id).to.equal(pm.environment.get('userId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}"]
+            }
+          }
+        },
+        {
+          "name": "Join Meeting",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Join meeting successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Participant added successfully', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "    pm.expect(responseJson).to.have.property('participant');",
+                  "    pm.expect(responseJson.participant.user_id).to.equal(pm.environment.get('userId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}", "join"]
+            }
+          }
+        },
+        {
+          "name": "Get Meeting Participants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get participants successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Current user is in participants list', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.be.an('array');",
+                  "    pm.expect(responseJson.length).to.be.at.least(1);",
+                  "    ",
+                  "    const currentUser = responseJson.find(p => p.user_id === pm.environment.get('userId'));",
+                  "    pm.expect(currentUser).to.not.be.undefined;",
+                  "    pm.expect(currentUser.status).to.equal('joined');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}/participants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}", "participants"]
+            }
+          }
+        },
+        {
+          "name": "End Meeting",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('End meeting successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Meeting ended successfully', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "    pm.expect(responseJson).to.have.property('meeting');",
+                  "    pm.expect(responseJson.meeting.status).to.equal('ended');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}/end",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}", "end"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "WebRTC Tests",
+      "item": [
+        {
+          "name": "Get ICE Servers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Get ICE servers successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('ICE servers configuration is valid', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('iceServers');",
+                  "    pm.expect(responseJson.iceServers).to.be.an('array');",
+                  "    pm.expect(responseJson.iceServers.length).to.be.at.least(1);",
+                  "    ",
+                  "    responseJson.iceServers.forEach(server => {",
+                  "        pm.expect(server).to.have.property('urls');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webrtc/ice-servers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "webrtc", "ice-servers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Security Tests",
+      "item": [
+        {
+          "name": "Unauthorized Access Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Unauthorized access denied', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Error message is appropriate', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('detail');",
+                  "    pm.expect(responseJson.detail).to.include('Not authenticated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Invalid Token Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Invalid token rejected', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Error message indicates invalid token', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid.token.here"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "console.log(`Running test: ${pm.info.requestName}`);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global assertion: Response time check",
+          "pm.test('Response time is acceptable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(10000);",
+          "});",
+          "",
+          "// Global assertion: No server errors",
+          "pm.test('No server errors (5xx)', function () {",
+          "    pm.expect(pm.response.code).to.be.below(500);",
+          "});",
+          "",
+          "// Log response for debugging",
+          "if (pm.response.code >= 400) {",
+          "    console.log(`Error ${pm.response.code}:`, pm.response.text());",
+          "}"
+        ]
+      }
+    }
+  ]
+}

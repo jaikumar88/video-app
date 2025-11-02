@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.local
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./app.db
+      - ENVIRONMENT=local
+      - SECRET_KEY=local-dev-secret-key-change-in-production
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - videoapp-network
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.local
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_WS_URL=ws://localhost:8000
+      - REACT_APP_ENVIRONMENT=local
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm start
+    depends_on:
+      - backend
+    networks:
+      - videoapp-network
+
+  # Redis for caching and sessions (local)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - videoapp-network
+
+  # TURN/STUN server for WebRTC
+  coturn:
+    image: coturn/coturn:latest
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "5349:5349/tcp"
+      - "49152-65535:49152-65535/udp"
+    environment:
+      - TURN_USERNAME=testuser
+      - TURN_PASSWORD=testpass
+      - TURN_REALM=localhost
+    command: |
+      -n -v -r localhost
+      -a -u testuser:testpass
+      -p 3478
+      --min-port=49152
+      --max-port=65535
+      --use-auth-secret
+      --static-auth-secret=test-secret
+      --realm=localhost
+    networks:
+      - videoapp-network
+
+volumes:
+  redis-data:
+
+networks:
+  videoapp-network:
+    driver: bridge

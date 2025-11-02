@@ -1,0 +1,47 @@
+{
+  "name": "worldclass-video-platform-postman-tests",
+  "version": "1.0.0",
+  "description": "Postman test automation for WorldClass Video Platform",
+  "main": "run-postman-tests.js",
+  "scripts": {
+    "test": "node run-postman-tests.js",
+    "test:local": "node run-postman-tests.js",
+    "test:prod": "node run-postman-tests.js --prod",
+    "test:api": "node run-postman-tests.js --api-only",
+    "test:automated": "node run-postman-tests.js --automated-only",
+    "test:load": "node run-postman-tests.js --iterations=10 --delay=50",
+    "test:smoke": "node run-postman-tests.js --api-only --skip-health",
+    "install-newman": "npm install -g newman",
+    "setup": "npm install && npm run install-newman",
+    "clean": "rm -rf reports/*"
+  },
+  "keywords": [
+    "postman",
+    "newman",
+    "api-testing",
+    "video-platform",
+    "automation"
+  ],
+  "author": "WorldClass Video Platform Team",
+  "license": "MIT",
+  "dependencies": {
+    "newman": "^6.0.0"
+  },
+  "devDependencies": {
+    "newman-reporter-html": "^1.0.5",
+    "newman-reporter-json": "^1.0.1",
+    "newman-reporter-junit": "^1.0.3"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/worldclass-video-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/worldclass-video-platform/issues"
+  },
+  "homepage": "https://github.com/your-org/worldclass-video-platform#readme"
+}

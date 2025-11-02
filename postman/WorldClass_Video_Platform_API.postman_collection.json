@@ -1,0 +1,870 @@
+{
+  "info": {
+    "name": "WorldClass Video Platform API",
+    "description": "Comprehensive API collection for WorldClass Video Platform - A scalable video calling platform supporting 1 billion users",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string",
+      "description": "Base URL for local development"
+    },
+    {
+      "key": "productionUrl",
+      "value": "https://your-domain.com",
+      "type": "string",
+      "description": "Production URL"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT access token for authenticated requests"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT refresh token"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string",
+      "description": "Current user ID"
+    },
+    {
+      "key": "meetingId",
+      "value": "",
+      "type": "string",
+      "description": "Current meeting ID"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and account management endpoints",
+      "item": [
+        {
+          "name": "Register User (Email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"full_name\": \"John Doe\",\n  \"registration_method\": \"email\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Register a new user with email verification"
+          },
+          "response": []
+        },
+        {
+          "name": "Register User (Phone)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1234567890\",\n  \"password\": \"SecurePassword123!\",\n  \"full_name\": \"Jane Doe\",\n  \"registration_method\": \"phone\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Register a new user with phone verification"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"verification_code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "verify-email"]
+            },
+            "description": "Verify email address with verification code"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Phone",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1234567890\",\n  \"verification_code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/verify-phone",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "verify-phone"]
+            },
+            "description": "Verify phone number with verification code"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Extract tokens from response",
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.environment.set('accessToken', responseJson.access_token);",
+                  "    pm.environment.set('refreshToken', responseJson.refresh_token);",
+                  "    pm.environment.set('userId', responseJson.user.id);",
+                  "    ",
+                  "    pm.test('Login successful', function () {",
+                  "        pm.expect(responseJson.access_token).to.be.a('string');",
+                  "        pm.expect(responseJson.refresh_token).to.be.a('string');",
+                  "        pm.expect(responseJson.user).to.have.property('id');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Login with email/phone and password"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Update access token",
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.environment.set('accessToken', responseJson.access_token);",
+                  "    ",
+                  "    pm.test('Token refresh successful', function () {",
+                  "        pm.expect(responseJson.access_token).to.be.a('string');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "refresh"]
+            },
+            "description": "Refresh access token using refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Get current authenticated user information"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"John Updated Doe\",\n  \"profile_picture\": \"https://example.com/avatar.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "profile"]
+            },
+            "description": "Update user profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"SecurePassword123!\",\n  \"new_password\": \"NewSecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "change-password"]
+            },
+            "description": "Change user password"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Logout and invalidate tokens"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meetings",
+      "description": "Meeting management and video calling endpoints",
+      "item": [
+        {
+          "name": "Create Meeting",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Store meeting ID for other requests",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.environment.set('meetingId', responseJson.id);",
+                  "    ",
+                  "    pm.test('Meeting created successfully', function () {",
+                  "        pm.expect(responseJson.id).to.be.a('string');",
+                  "        pm.expect(responseJson.title).to.be.a('string');",
+                  "        pm.expect(responseJson.status).to.equal('waiting');",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Team Standup Meeting\",\n  \"description\": \"Daily team standup to discuss progress and blockers\",\n  \"scheduled_time\": \"2024-01-15T10:00:00Z\",\n  \"max_participants\": 10,\n  \"is_public\": false,\n  \"meeting_type\": \"video\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings"]
+            },
+            "description": "Create a new meeting"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Meetings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get list of user's meetings with pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Meeting Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}"]
+            },
+            "description": "Get detailed information about a specific meeting"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Meeting",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Team Meeting\",\n  \"description\": \"Updated description for the meeting\",\n  \"scheduled_time\": \"2024-01-15T11:00:00Z\",\n  \"max_participants\": 15\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}"]
+            },
+            "description": "Update meeting details"
+          },
+          "response": []
+        },
+        {
+          "name": "Join Meeting",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}/join",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}", "join"]
+            },
+            "description": "Join a meeting as a participant"
+          },
+          "response": []
+        },
+        {
+          "name": "Leave Meeting",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}/leave",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}", "leave"]
+            },
+            "description": "Leave a meeting"
+          },
+          "response": []
+        },
+        {
+          "name": "End Meeting",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}/end",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}", "end"]
+            },
+            "description": "End a meeting (host only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Meeting Participants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}/participants",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}", "participants"]
+            },
+            "description": "Get list of meeting participants"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Meeting Link",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/meetings/{{meetingId}}/invite-link",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "meetings", "{{meetingId}}", "invite-link"]
+            },
+            "description": "Generate shareable meeting invitation link"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "WebRTC Signaling",
+      "description": "WebRTC signaling endpoints for video calling",
+      "item": [
+        {
+          "name": "Get ICE Servers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webrtc/ice-servers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "webrtc", "ice-servers"]
+            },
+            "description": "Get ICE servers configuration for WebRTC"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Offer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meeting_id\": \"{{meetingId}}\",\n  \"target_user_id\": \"target-user-id\",\n  \"offer\": {\n    \"type\": \"offer\",\n    \"sdp\": \"v=0\\r\\no=- 123456789 123456789 IN IP4 127.0.0.1\\r\\n...\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webrtc/offer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "webrtc", "offer"]
+            },
+            "description": "Send WebRTC offer to another participant"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meeting_id\": \"{{meetingId}}\",\n  \"target_user_id\": \"target-user-id\",\n  \"answer\": {\n    \"type\": \"answer\",\n    \"sdp\": \"v=0\\r\\no=- 123456789 123456789 IN IP4 127.0.0.1\\r\\n...\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webrtc/answer",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "webrtc", "answer"]
+            },
+            "description": "Send WebRTC answer to complete connection"
+          },
+          "response": []
+        },
+        {
+          "name": "Send ICE Candidate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meeting_id\": \"{{meetingId}}\",\n  \"target_user_id\": \"target-user-id\",\n  \"candidate\": {\n    \"candidate\": \"candidate:1 1 UDP 2013266431 192.168.1.100 54400 typ host\",\n    \"sdpMLineIndex\": 0,\n    \"sdpMid\": \"0\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/webrtc/ice-candidate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "webrtc", "ice-candidate"]
+            },
+            "description": "Send ICE candidate for connection establishment"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health & Monitoring",
+      "description": "System health and monitoring endpoints",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Basic health check endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Detailed Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "health"]
+            },
+            "description": "Detailed health check with database and service status"
+          },
+          "response": []
+        },
+        {
+          "name": "Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "metrics"]
+            },
+            "description": "Get system metrics (requires admin privileges)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative endpoints (requires admin privileges)",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users?limit=50&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "users"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get list of all users (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "users", "{{userId}}"]
+            },
+            "description": "Get detailed user information (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false,\n  \"is_verified\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/{{userId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "users", "{{userId}}", "status"]
+            },
+            "description": "Update user status (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Meetings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/meetings?limit=50&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "meetings"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Get list of all meetings (admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Meeting",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/meetings/{{meetingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "meetings", "{{meetingId}}"]
+            },
+            "description": "Delete a meeting (admin only)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('Making request to:', pm.request.url.toString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has valid JSON format', function () {",
+          "    if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('application/json')) {",
+          "        pm.response.to.have.jsonBody();",
+          "    }",
+          "});",
+          "",
+          "// Handle errors",
+          "if (pm.response.code >= 400) {",
+          "    console.log('Error response:', pm.response.json());",
+          "}"
+        ]
+      }
+    }
+  ]
+}

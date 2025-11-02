@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Participant Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: #4CAF50; }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            background: #ff5252;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #ff9800;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        input {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #333;
+            color: white;
+            margin: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 WebRTC Two Participant Test</h1>
+        
+        <div class="section">
+            <h2>Current Situation</h2>
+            <div class="error">
+                <strong>❌ Problem:</strong> Admin can see themselves but no other participants appear
+            </div>
+            <div class="warning">
+                <strong>⚠️  Root Cause:</strong> You need TWO separate users/windows in the SAME meeting for WebRTC to work
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Quick Fix - Testing Steps</h2>
+            <p><strong>Current Window (Admin):</strong></p>
+            <ol>
+                <li>Stay logged in as Admin</li>
+                <li>Note your current meeting URL: <code id="currentUrl">Check URL bar</code></li>
+                <li>Click the 🔗 Copy Link button in the meeting controls</li>
+            </ol>
+            
+            <p><strong>New Incognito Window (Guest):</strong></p>
+            <ol>
+                <li>Press <kbd>Ctrl+Shift+N</kbd> (Chrome) or <kbd>Ctrl+Shift+P</kbd> (Firefox)</li>
+                <li>Go to: <input type="text" id="guestUrl" style="width: 400px;" readonly value="http://localhost:8000/guest-join.html"></li>
+                <li>Enter Meeting ID from Admin window</li>
+                <li>Click "Join Meeting as Guest"</li>
+            </ol>
+
+            <button onclick="copyGuestUrl()">📋 Copy Guest Join URL</button>
+            <button onclick="openIncognito()">🔓 Open Incognito Window</button>
+        </div>
+
+        <div class="section">
+            <h2>✅ What Should Happen</h2>
+            <ul>
+                <li>Admin window: Should show "Guest User" in participants panel (right side)</li>
+                <li>Guest window: Should show "Admin User" in participants panel</li>
+                <li>Both should see each other's video (if cameras are on)</li>
+                <li>Both should hear each other (if microphones are on)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🐛 Debug Console</h2>
+            <p>Open browser console (F12) and look for these messages:</p>
+            <div class="log" id="debugLog">
+                Waiting for events...<br>
+                <br>
+                <strong>Good messages to see:</strong><br>
+                ✅ "WebSocket connected to meeting: [ID]"<br>
+                ✅ "User joined: [user_id]"<br>
+                ✅ "WebRTC signal received"<br>
+                ✅ "ICE candidate"<br>
+                <br>
+                <strong>Bad messages (errors):</strong><br>
+                ❌ "WebSocket connection failed"<br>
+                ❌ "Failed to get user media"<br>
+                ❌ "Permission denied"<br>
+                ❌ "Meeting not found"<br>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📋 Common Issues</h2>
+            <table style="width: 100%; color: white;">
+                <tr style="background: #333;">
+                    <th style="padding: 10px; text-align: left;">Issue</th>
+                    <th style="padding: 10px; text-align: left;">Solution</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #444;">No participants showing</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #444;">Make sure both windows are in SAME meeting ID</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #444;">Can't hear/see guest</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #444;">Check browser console for WebRTC errors</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #444;">Guest can't join</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #444;">Verify meeting ID is correct</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #444;">404 error</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #444;">Meeting doesn't exist - create new one</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>🎬 Alternative: Use Meeting ID Directly</h2>
+            <p>If you know your meeting ID, paste it here:</p>
+            <input type="text" id="meetingIdInput" placeholder="Enter Meeting ID (e.g., 66063364557)" style="width: 300px;">
+            <button onclick="joinDirectly()">Join as Guest</button>
+        </div>
+    </div>
+
+    <script>
+        function copyGuestUrl() {
+            const url = document.getElementById('guestUrl').value;
+            navigator.clipboard.writeText(url);
+            alert('Guest join URL copied! Paste in incognito window.');
+        }
+
+        function openIncognito() {
+            alert('Press Ctrl+Shift+N (Chrome) or Ctrl+Shift+P (Firefox) to open incognito window, then paste:\n\nhttp://localhost:8000/guest-join.html');
+        }
+
+        function joinDirectly() {
+            const meetingId = document.getElementById('meetingIdInput').value.trim();
+            if (!meetingId) {
+                alert('Please enter a meeting ID');
+                return;
+            }
+            window.location.href = `http://localhost:3000/join/${meetingId}`;
+        }
+
+        // Try to detect current URL
+        if (window.location.href.includes('/meeting/')) {
+            const url = window.location.href;
+            document.getElementById('currentUrl').textContent = url;
+            
+            // Extract meeting ID
+            const match = url.match(/\/meeting\/([^\/]+)/);
+            if (match) {
+                document.getElementById('meetingIdInput').value = match[1];
+            }
+        }
+    </script>
+</body>
+</html>

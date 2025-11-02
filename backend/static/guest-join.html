@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Meeting as Guest</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1976d2;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1976d2;
+        }
+        .instructions {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        .instructions h3 {
+            margin-top: 0;
+        }
+        .instructions ol {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 Quick Guest Join</h1>
+        
+        <div class="info">
+            <strong>Testing Two Participants</strong><br>
+            Use this page to join as a guest while you're logged in as admin in another window.
+        </div>
+
+        <form id="guestForm">
+            <div class="form-group">
+                <label for="meetingId">Meeting ID:</label>
+                <input type="text" id="meetingId" placeholder="e.g., 66063364557" required>
+            </div>
+
+            <div class="form-group">
+                <label for="guestName">Your Name:</label>
+                <input type="text" id="guestName" value="Guest User" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email (optional):</label>
+                <input type="email" id="email" placeholder="guest@example.com">
+            </div>
+
+            <button type="submit">Join Meeting as Guest</button>
+        </form>
+
+        <div class="instructions">
+            <h3>📋 How to Test Two Participants:</h3>
+            <ol>
+                <li><strong>Window 1 (Admin):</strong> Stay in your current meeting as Admin</li>
+                <li><strong>Window 2 (Guest):</strong> Open this page in a <strong>new incognito window</strong></li>
+                <li>Enter the same <strong>Meeting ID</strong> that admin is in</li>
+                <li>Click "Join Meeting as Guest"</li>
+                <li>Both windows should now see each other!</li>
+            </ol>
+            <p><strong>Meeting ID from your screenshot:</strong> You can find it in the URL or copy it from the invite link button</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('guestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const meetingId = document.getElementById('meetingId').value.trim();
+            const guestName = document.getElementById('guestName').value.trim();
+            const email = document.getElementById('email').value.trim() || 'guest@test.com';
+
+            // Redirect to guest join page
+            const frontendUrl = 'http://localhost:3000';
+            const joinUrl = `${frontendUrl}/join/${meetingId}?name=${encodeURIComponent(guestName)}&email=${encodeURIComponent(email)}`;
+            
+            window.location.href = joinUrl;
+        });
+
+        // Auto-populate meeting ID from URL if provided
+        const urlParams = new URLSearchParams(window.location.search);
+        const meetingIdParam = urlParams.get('meeting');
+        if (meetingIdParam) {
+            document.getElementById('meetingId').value = meetingIdParam;
+        }
+    </script>
+</body>
+</html>

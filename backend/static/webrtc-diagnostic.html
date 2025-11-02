@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Diagnostic Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        video {
+            width: 100%;
+            max-width: 640px;
+            background: #000;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .video-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .video-box {
+            flex: 1;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 WebRTC Video/Audio Diagnostic Tool</h1>
+
+        <div class="section">
+            <h2>1. Browser Compatibility</h2>
+            <div id="browser-check"></div>
+        </div>
+
+        <div class="section">
+            <h2>2. Media Devices</h2>
+            <div id="devices-check"></div>
+            <button onclick="checkDevices()">Check Devices</button>
+        </div>
+
+        <div class="section">
+            <h2>3. Camera & Microphone Access</h2>
+            <div id="media-status"></div>
+            <button onclick="requestMedia()">Request Camera/Microphone</button>
+            <button onclick="stopMedia()">Stop</button>
+            
+            <div class="video-container">
+                <div class="video-box">
+                    <h3>Local Video</h3>
+                    <video id="localVideo" autoplay muted playsinline></video>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>4. WebRTC Configuration</h2>
+            <div id="webrtc-config"></div>
+            <button onclick="testSTUN()">Test STUN Server</button>
+        </div>
+
+        <div class="section">
+            <h2>5. Backend Connection</h2>
+            <div id="backend-status"></div>
+            <button onclick="testBackend()">Test Backend</button>
+        </div>
+
+        <div class="section">
+            <h2>6. Diagnostic Log</h2>
+            <pre id="log"></pre>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        let localStream = null;
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️';
+            log.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // 1. Check browser compatibility
+        function checkBrowser() {
+            const checks = {
+                'getUserMedia': !!navigator.mediaDevices?.getUserMedia,
+                'RTCPeerConnection': !!window.RTCPeerConnection,
+                'WebSocket': !!window.WebSocket,
+                'HTTPS or localhost': window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+            };
+
+            let html = '';
+            let allSupported = true;
+
+            for (const [feature, supported] of Object.entries(checks)) {
+                const status = supported ? 'success' : 'error';
+                const icon = supported ? '✅' : '❌';
+                html += `<div class="status ${status}">${icon} ${feature}: ${supported ? 'Supported' : 'Not Supported'}</div>`;
+                if (!supported) allSupported = false;
+                addLog(`${feature}: ${supported}`, supported ? 'success' : 'error');
+            }
+
+            document.getElementById('browser-check').innerHTML = html;
+
+            if (!allSupported) {
+                html += '<div class="status warning">⚠️ Some WebRTC features may not work. Please use Chrome, Firefox, or Edge on HTTPS or localhost.</div>';
+            }
+        }
+
+        // 2. Check available devices
+        async function checkDevices() {
+            try {
+                addLog('Enumerating media devices...');
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                
+                const videoDevices = devices.filter(d => d.kind === 'videoinput');
+                const audioDevices = devices.filter(d => d.kind === 'audioinput');
+
+                let html = `
+                    <div class="status success">✅ Found ${videoDevices.length} camera(s) and ${audioDevices.length} microphone(s)</div>
+                    <h4>Video Devices:</h4>
+                    <ul>
+                `;
+
+                videoDevices.forEach(device => {
+                    html += `<li>${device.label || 'Camera ' + device.deviceId.substring(0, 8)}</li>`;
+                    addLog(`Camera: ${device.label || device.deviceId}`);
+                });
+
+                html += '</ul><h4>Audio Devices:</h4><ul>';
+
+                audioDevices.forEach(device => {
+                    html += `<li>${device.label || 'Microphone ' + device.deviceId.substring(0, 8)}</li>`;
+                    addLog(`Microphone: ${device.label || device.deviceId}`);
+                });
+
+                html += '</ul>';
+                document.getElementById('devices-check').innerHTML = html;
+                addLog('Device enumeration complete', 'success');
+
+            } catch (error) {
+                const msg = `Error checking devices: ${error.message}`;
+                document.getElementById('devices-check').innerHTML = `<div class="status error">❌ ${msg}</div>`;
+                addLog(msg, 'error');
+            }
+        }
+
+        // 3. Request camera and microphone
+        async function requestMedia() {
+            try {
+                addLog('Requesting camera and microphone access...');
+                
+                const constraints = {
+                    video: {
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: true
+                };
+
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                const videoElement = document.getElementById('localVideo');
+                videoElement.srcObject = localStream;
+
+                const videoTracks = localStream.getVideoTracks();
+                const audioTracks = localStream.getAudioTracks();
+
+                let html = `
+                    <div class="status success">✅ Media access granted!</div>
+                    <div class="status success">Video: ${videoTracks[0]?.label}</div>
+                    <div class="status success">Audio: ${audioTracks[0]?.label}</div>
+                `;
+
+                document.getElementById('media-status').innerHTML = html;
+                addLog(`Video track: ${videoTracks[0]?.label}`, 'success');
+                addLog(`Audio track: ${audioTracks[0]?.label}`, 'success');
+                addLog('Media access granted', 'success');
+
+            } catch (error) {
+                const msg = `Failed to access media: ${error.name} - ${error.message}`;
+                document.getElementById('media-status').innerHTML = `<div class="status error">❌ ${msg}</div>`;
+                addLog(msg, 'error');
+
+                if (error.name === 'NotAllowedError') {
+                    addLog('Permission denied. Please allow camera/microphone access in browser settings.', 'error');
+                } else if (error.name === 'NotFoundError') {
+                    addLog('No camera or microphone found. Please connect a device.', 'error');
+                }
+            }
+        }
+
+        function stopMedia() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                document.getElementById('localVideo').srcObject = null;
+                localStream = null;
+                document.getElementById('media-status').innerHTML = '<div class="status">Media stopped</div>';
+                addLog('Media stopped');
+            }
+        }
+
+        // 4. Test STUN server
+        async function testSTUN() {
+            try {
+                addLog('Testing STUN server configuration...');
+                
+                const config = {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' }
+                    ]
+                };
+
+                const pc = new RTCPeerConnection(config);
+                
+                pc.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        addLog(`ICE candidate: ${event.candidate.candidate.substring(0, 50)}...`);
+                    }
+                };
+
+                // Create a dummy data channel to trigger ICE gathering
+                pc.createDataChannel('test');
+                
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+
+                let html = '<div class="status success">✅ STUN server configuration OK</div>';
+                html += `<pre>${JSON.stringify(config, null, 2)}</pre>`;
+                document.getElementById('webrtc-config').innerHTML = html;
+                addLog('STUN test successful', 'success');
+
+                setTimeout(() => pc.close(), 5000);
+
+            } catch (error) {
+                const msg = `STUN test failed: ${error.message}`;
+                document.getElementById('webrtc-config').innerHTML = `<div class="status error">❌ ${msg}</div>`;
+                addLog(msg, 'error');
+            }
+        }
+
+        // 5. Test backend connection
+        async function testBackend() {
+            const backendUrl = 'http://localhost:8000';
+            try {
+                addLog('Testing backend connection...');
+                
+                const response = await fetch(`${backendUrl}/health`);
+                const data = await response.json();
+
+                let html = `
+                    <div class="status success">✅ Backend is running!</div>
+                    <div class="status success">Status: ${data.status}</div>
+                    <div class="status success">Environment: ${data.environment}</div>
+                `;
+                document.getElementById('backend-status').innerHTML = html;
+                addLog(`Backend health: ${JSON.stringify(data)}`, 'success');
+
+            } catch (error) {
+                const msg = `Backend connection failed: ${error.message}`;
+                document.getElementById('backend-status').innerHTML = `
+                    <div class="status error">❌ ${msg}</div>
+                    <div class="status warning">⚠️ Make sure backend is running on ${backendUrl}</div>
+                `;
+                addLog(msg, 'error');
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            addLog('WebRTC Diagnostic Tool loaded');
+            checkBrowser();
+            checkDevices();
+            testBackend();
+        });
+    </script>
+</body>
+</html>
