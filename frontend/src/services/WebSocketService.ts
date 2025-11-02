@@ -90,9 +90,10 @@ export class WebSocketService {
    * Build WebSocket URL with parameters
    */
   private buildWebSocketUrl(meetingId: string, token: string): string {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = process.env.REACT_APP_WS_URL || `${protocol}//${window.location.host}`;
-    return `${host}/ws/${meetingId}?token=${encodeURIComponent(token)}`;
+    // Use REACT_APP_WS_URL from environment, fallback to constructing from window location
+    const wsUrl = process.env.REACT_APP_WS_URL || 
+                  (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + window.location.hostname + ':8000';
+    return `${wsUrl}/ws/${meetingId}?token=${encodeURIComponent(token)}`;
   }
   
   /**
