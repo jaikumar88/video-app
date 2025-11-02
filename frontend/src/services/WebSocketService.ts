@@ -46,9 +46,14 @@ export class WebSocketService {
         
         this.ws.onopen = () => {
           console.log('WebSocket connected to meeting:', meetingId);
+          console.log('WebSocket readyState:', this.ws?.readyState);
           this.reconnectAttempts = 0;
           this.reconnectDelay = 1000;
-          this.startHeartbeat();
+          
+          // Wait a bit before starting heartbeat to ensure connection is fully established
+          setTimeout(() => {
+            this.startHeartbeat();
+          }, 100);
           
           if (this.onConnectionStateChange) {
             this.onConnectionStateChange(true);
@@ -191,7 +196,7 @@ export class WebSocketService {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.error('WebSocket is not connected');
+      console.warn(`[WebSocketService] Cannot send message (connection state: ${this.ws?.readyState}):`, message.type);
     }
   }
 
