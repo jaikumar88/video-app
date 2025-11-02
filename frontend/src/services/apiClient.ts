@@ -13,6 +13,7 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true', // Bypass ngrok browser warning on free tier
   },
 });
 

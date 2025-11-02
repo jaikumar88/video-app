@@ -98,7 +98,8 @@ export class WebSocketService {
     // Use REACT_APP_WS_URL from environment, fallback to constructing from window location
     const wsUrl = process.env.REACT_APP_WS_URL || 
                   (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + window.location.hostname + ':8000';
-    return `${wsUrl}/ws/${meetingId}?token=${encodeURIComponent(token)}`;
+    // Add ngrok bypass parameter for free tier (no-op if not using ngrok)
+    return `${wsUrl}/ws/${meetingId}?token=${encodeURIComponent(token)}&ngrok-skip-browser-warning=true`;
   }
   
   /**
