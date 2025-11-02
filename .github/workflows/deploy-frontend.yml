@@ -2,15 +2,12 @@ name: Deploy Frontend to GitHub Pages
 
 on:
   push:
-    branches: [ main, master ]
-    paths: ['frontend/**']
-  pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
     paths: ['frontend/**']
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -29,6 +26,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        submodules: true
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -45,9 +44,13 @@ jobs:
       env:
         CI: false
         REACT_APP_API_URL: https://uncurdling-joane-pantomimical.ngrok-free.dev/api/v1
-        REACT_APP_WS_URL: wss://uncurdling-joane-pantomimical.ngrok-free.dev/ws
+        REACT_APP_WS_URL: wss://uncurdling-joane-pantomimical.ngrok-free.dev
         
-    - name: Setup Pages
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./frontend/build
       uses: actions/configure-pages@v4
       
     - name: Upload artifact
